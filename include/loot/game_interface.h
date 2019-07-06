@@ -28,6 +28,7 @@
 
 #include "loot/database_interface.h"
 #include "loot/plugin_interface.h"
+#include "loot/struct/load_order_graph.h"
 
 namespace loot {
 /** @brief The interface provided for accessing game-specific functionality. */
@@ -123,6 +124,19 @@ public:
    *           order.
    */
   virtual std::vector<std::string> SortPlugins(
+      const std::vector<std::string>& plugins) = 0;
+
+  /**
+   *  @brief Returns the load order constraints graph used for sorting the load
+   *         order.
+   *  @details This function is similar to SortPlugins(), but returns the
+   *           plugin graph instead of topologically sorting it and returning
+   *           the result.
+   *  @param plugins
+   *         A vector of filenames of the plugins to sort.
+   *  @returns A data structure representing the load order constraints graph.
+   */
+  virtual LoadOrderGraph GenerateLoadOrderGraph(
       const std::vector<std::string>& plugins) = 0;
 
   /**

@@ -25,6 +25,7 @@
 #include "plugin_sorter.h"
 
 #include <cstdlib>
+#include <unordered_map>
 #include <queue>
 
 #include <boost/algorithm/string.hpp>
@@ -145,6 +146,57 @@ std::vector<std::string> PluginSorter::Sort(Game& game) {
   }
 
   return plugins;
+}
+
+LoadOrderGraph PluginSorter::GenerateLoadOrderGraph(Game& game) {
+  logger_ = getLogger();
+
+  // Clear existing data.
+  graph_.clear();
+  indexMap_.clear();
+  pathsCache_.clear();
+
+  AddPluginVertices(game);
+
+  // If there aren't any vertices, exit early, because sorting assumes
+  // there is at least one plugin.
+  if (boost::num_vertices(graph_) == 0)
+    return LoadOrderGraph();
+
+  // Now add the interactions between plugins to the graph as edges.
+  AddSpecificEdges();
+  AddHardcodedPluginEdges(game);
+  AddGroupEdges();
+  AddOverlapEdges();
+  AddTieBreakEdges();
+
+  CheckForCycles();
+
+  // Convert the Boost graph to a LoadOrderGraph.
+  LoadOrderGraph loadOrderGraph;
+  std::unordered_map<vertex_t, size_t> vertexDescriptorToIndexMap;
+  
+  for (const vertex_t& vertex :
+       boost::make_iterator_range(boost::vertices(graph_))) {
+    loadOrderGraph.vertices.push_back(graph_[vertex].GetName());
+    vertexDescriptorToIndexMap.emplace(vertex,
+                                       loadOrderGraph.vertices.size() - 1);
+  }
+
+  for (const edge_t& edgeDescriptor :
+       boost::make_iterator_range(boost::edges(graph_))) {
+    vertex_t source = boost::source(edgeDescriptor, graph_);
+    vertex_t target = boost::target(edgeDescriptor, graph_);
+
+    LoadOrderEdge edge;
+    edge.edgeType = graph_[edgeDescriptor];
+    edge.sourceIndex = vertexDescriptorToIndexMap.at(source);
+    edge.targetIndex = vertexDescriptorToIndexMap.at(target);
+
+    loadOrderGraph.edges.push_back(edge);
+  }
+
+  return loadOrderGraph;
 }
 
 void PluginSorter::AddPluginVertices(Game& game) {

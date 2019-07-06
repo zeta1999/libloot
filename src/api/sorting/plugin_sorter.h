@@ -38,6 +38,7 @@
 #include "api/plugin.h"
 #include "api/sorting/plugin_sorting_data.h"
 #include "loot/exception/cyclic_interaction_error.h"
+#include "loot/struct/load_order_graph.h"
 
 namespace loot {
 typedef boost::adjacency_list<boost::listS,
@@ -81,6 +82,8 @@ namespace loot {
 class PluginSorter {
 public:
   std::vector<std::string> Sort(Game& game);
+
+  LoadOrderGraph GenerateLoadOrderGraph(Game& game);
 
 private:
   std::optional<vertex_t> GetVertexByName(const std::string& name) const;

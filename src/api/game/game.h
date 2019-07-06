@@ -68,6 +68,9 @@ public:
 
   std::vector<std::string> SortPlugins(const std::vector<std::string>& plugins);
 
+  virtual LoadOrderGraph GenerateLoadOrderGraph(
+      const std::vector<std::string>& plugins);
+
   void LoadCurrentLoadOrderState();
 
   bool IsPluginActive(const std::string& pluginName) const;

@@ -117,6 +117,11 @@ protected:
     }
   }
 
+  bool contains(const std::vector<std::string> &vec, const std::string &value) {
+    return std::any_of(
+        vec.begin(), vec.end(), [&](std::string s) { return s == value; });
+  }
+
   Game game_;
   const std::string blankEslEsp;
   const std::filesystem::path masterlistPath_;
@@ -394,8 +399,9 @@ TEST_P(
   }
 }
 
-TEST_P(PluginSorterTest,
-       sortingShouldNotIgnoreIntermediatePluginsInAMultiGroupCycleIfTheEarlierPluginIsNotAMasterAndTheLaterIs) {
+TEST_P(
+    PluginSorterTest,
+    sortingShouldNotIgnoreIntermediatePluginsInAMultiGroupCycleIfTheEarlierPluginIsNotAMasterAndTheLaterIs) {
   ASSERT_NO_THROW(loadInstalledPlugins(game_, false));
 
   GenerateMasterlist();
@@ -579,6 +585,23 @@ TEST_P(PluginSorterTest, sortingShouldThrowIfACyclicInteractionIsEncountered) {
 
   PluginSorter ps;
   EXPECT_THROW(ps.Sort(game_), CyclicInteractionError);
+}
+
+TEST_P(PluginSorterTest, generateLoadOrderGraph) {
+  ASSERT_NO_THROW(loadInstalledPlugins(game_, false));
+
+  PluginSorter ps;
+  auto graph = ps.GenerateLoadOrderGraph(game_);
+
+  if (GetParam() == GameType::fo4 || GetParam() == GameType::tes5se) {
+    EXPECT_EQ(12, graph.vertices.size());
+    EXPECT_EQ(60, graph.edges.size());
+  } else {
+    EXPECT_EQ(11, graph.vertices.size());
+    EXPECT_EQ(52, graph.edges.size());
+  }
+
+  EXPECT_TRUE(contains(graph.vertices, masterFile));
 }
 }
 }

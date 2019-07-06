@@ -224,6 +224,15 @@ std::vector<std::string> Game::SortPlugins(
   return sorter.Sort(*this);
 }
 
+LoadOrderGraph Game::GenerateLoadOrderGraph(
+    const std::vector<std::string>& plugins) {
+  LoadPlugins(plugins, false);
+
+  // Sort plugins into their load order.
+  PluginSorter sorter;
+  return sorter.GenerateLoadOrderGraph(*this);
+}
+
 void Game::LoadCurrentLoadOrderState() {
   loadOrderHandler_->LoadCurrentState();
   conditionEvaluator_->RefreshState(loadOrderHandler_);
